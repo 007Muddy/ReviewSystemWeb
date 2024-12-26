@@ -1,0 +1,167 @@
+﻿@page
+@model ReviewsystemWeb.Pages.LoginModel
+@{
+    ViewData["Title"] = "Login";
+}
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+
+<style>
+    body {
+        background-image: url('../Images/background1.png');
+        background-size: cover;
+        background-position: center;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: Arial, sans-serif;
+    }
+
+    .login-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100vh;
+    }
+
+    .btn-login {
+        background-color: #007AFF;
+        color: white;
+        width: 100%;
+        border-radius: 8px;
+        font-size: 18px;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: none;
+    }
+
+    .form-container {
+        background-color: rgba(255, 255, 255, 0.85);
+        padding: 30px;
+        border-radius: 12px;
+        max-width: 400px;
+        width: 100%;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-title {
+        font-size: 26px;
+        font-weight: bold;
+        text-align: center;
+        color: #444;
+        margin-bottom: 20px;
+    }
+
+    .input-group {
+        margin-bottom: 20px;
+        position: relative;
+        border-radius: 8px;
+        background-color: white;
+        display: flex;
+        align-items: center;
+    }
+
+        .input-group img {
+            margin: 0 10px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            outline: none;
+            font-size: 16px;
+        }
+
+    .toggle-password-btn {
+        position: absolute;
+        right: 10px;
+        background: none;
+        border: none;
+        color: #666;
+        cursor: pointer;
+        font-size: 18px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .toggle-password-btn:focus {
+            outline: none;
+        }
+
+        .toggle-password-btn i {
+            pointer-events: none; /* Prevent clicks on the icon itself */
+        }
+</style>
+
+<div class="login-container">
+    <div class="form-container">
+        <!-- Page Title -->
+        <h2 class="form-title">Login</h2>
+
+        <!-- Error Message -->
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                @Model.ErrorMessage
+            </div>
+        }
+
+        <!-- Form Fields with Icons -->
+        <form method="post">
+            <!-- Username Field -->
+            <div class="input-group">
+                <img src="~/Images/user.png" width="24" height="24" alt="User Icon" />
+                <input type="text" asp-for="Username" placeholder="Enter Username" required />
+            </div>
+
+            <!-- Password Field -->
+            <div class="input-group">
+                <img src="~/Images/padlock.png" width="24" height="24" alt="Padlock Icon" />
+                <input type="password" asp-for="Password" placeholder="Enter Password" required id="passwordField" />
+                <button type="button" class="toggle-password-btn" aria-label="Toggle password visibility" onclick="togglePasswordVisibility()">
+                    <i id="passwordIcon" class="fas fa-eye"></i>
+                </button>
+            </div>
+
+            <!-- Login Button -->
+            <button type="submit" class="btn btn-login">Login</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Function to submit the form on Enter key press
+    document.addEventListener("DOMContentLoaded", () => {
+        const form = document.querySelector("form");
+        form.addEventListener("keypress", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault(); // Prevent default behavior
+                form.submit(); // Trigger the form submission
+            }
+        });
+    });
+
+    // Function to toggle password visibility
+    function togglePasswordVisibility() {
+        const passwordField = document.getElementById("passwordField");
+        const passwordIcon = document.getElementById("passwordIcon");
+
+        if (passwordField.type === "password") {
+            passwordField.type = "text";
+            passwordIcon.classList.remove("fa-eye");
+            passwordIcon.classList.add("fa-eye-slash");
+        } else {
+            passwordField.type = "password";
+            passwordIcon.classList.remove("fa-eye-slash");
+            passwordIcon.classList.add("fa-eye");
+        }
+    }
+</script>
+

@@ -1,0 +1,195 @@
+﻿@page
+@model ReviewsystemWeb.Pages.AdminViewPageModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<style>
+    body {
+        background-image: url('../Images/background1.png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        margin: 0;
+        padding: 0;
+    }
+
+    .semi-transparent-overlay {
+        background: rgba(0, 0, 0, 0.7);
+        padding: 30px;
+        min-height: 100vh;
+        border-radius: 15px;
+    }
+
+    .logout-btn {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background-color: #dc3545;
+        color: #fff;
+        font-size: 18px;
+        font-weight: bold;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.3s;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+        .logout-btn:hover {
+            background-color: #c82333;
+            transform: scale(1.05);
+        }
+
+        .logout-btn:focus {
+            outline: none;
+            box-shadow: 0px 0px 10px rgba(230, 57, 70, 0.6);
+        }
+
+    .logout-message {
+        display: none;
+        font-size: 24px;
+        color: #28a745;
+        text-align: center;
+        margin-top: 20px;
+        font-weight: bold;
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 15px 30px;
+        border-radius: 10px;
+        box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    @@keyframes fadeIn {
+        from
+
+    {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    }
+
+    .form-container {
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .input-group-text img {
+        width: 24px;
+        height: 24px;
+    }
+
+    .user-list-header {
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+        font-weight: bold;
+    }
+
+    .user-list-item {
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+        margin-bottom: 10px;
+    }
+
+    .btn-block {
+        width: 100%;
+    }
+</style>
+
+<div class="semi-transparent-overlay text-light container">
+    <h2 class="text-center font-weight-bold mb-4">Admin Dashboard</h2>
+    <button type="button" class="btn btn-light logout-btn" onclick="window.location='/LogoutPage';">
+        Logout
+    </button>
+    @if (!string.IsNullOrEmpty(TempData["SuccessMessage"] as string))
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (!ModelState.IsValid)
+    {
+        <div class="alert alert-danger">
+            <ul>
+                @foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <li>@error.ErrorMessage</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <!-- Section to Register a New User -->
+    <h4>Register New User</h4>
+    <form method="post" class="form-container mb-4">
+        <div class="input-group mb-3">
+            <span class="input-group-text">
+                <img src="~/Images/user.png" alt="User Icon" />
+            </span>
+            <input type="text" class="form-control" asp-for="Username" placeholder="Username" />
+        </div>
+
+        <div class="input-group mb-3">
+            <span class="input-group-text">
+                <img src="~/Images/email.png" alt="Email Icon" />
+            </span>
+            <input type="email" class="form-control" asp-for="Email" placeholder="Email" />
+        </div>
+
+        <div class="input-group mb-3">
+            <span class="input-group-text">
+                <img src="~/Images/padlock.png" alt="Padlock Icon" />
+            </span>
+            <input type="password" class="form-control" asp-for="Password" placeholder="Password" />
+        </div>
+
+        <button type="submit" asp-page-handler="RegisterUser" class="btn btn-success btn-block mb-4">Register User</button>
+    </form>
+
+    <h4>User List</h4>
+    <div class="row font-weight-bold mb-3">
+        <div class="col-md-4">Username</div>
+        <div class="col-md-4">Email</div>
+        <div class="col-md-4 text-right">Actions</div>
+    </div>
+
+    @foreach (var user in Model.Users)
+    {
+        <div class="row bg-light text-dark p-3 mb-2 rounded">
+            <div class="col-md-4">@user.UserName</div>
+            <div class="col-md-4">@user.Email</div>
+            <div class="col-md-4 text-right">
+                <form method="post" class="d-inline">
+                    <input type="hidden" name="usernameToDelete" value="@user.UserName" />
+                    <button type="submit" asp-page-handler="DeleteUser" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+            </div>
+        </div>
+    }
+</div>
+
+<script>
+    function logoutWithMessage() {
+        var logoutMessage = document.getElementById("logoutMessage");
+        logoutMessage.style.display = "block";
+
+        setTimeout(function () {
+            window.location.href = "/LogoutPage";
+        }, 500);
+    }
+</script>
