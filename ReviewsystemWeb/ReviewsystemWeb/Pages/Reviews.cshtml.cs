@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
 using System;
+using static ReviewsystemWeb.Models.ReviewModel;
 
 namespace ReviewsystemWeb.Pages
 {
@@ -14,16 +15,18 @@ namespace ReviewsystemWeb.Pages
     {
         private readonly IHttpClientFactory _httpClientFactory;
 
-        // Holds the fetched reviews
-        public List<Review> AllReviews { get; set; } = new();
-
-        // Holds a simple list of { Rating, Count } for the chart
-        public List<RatingCount> RatingDistribution { get; set; } = new();
-
         public ReviewsModel(IHttpClientFactory httpClientFactory)
         {
             _httpClientFactory = httpClientFactory;
         }
+
+        public List<Review> AllReviews { get; set; } = new();
+
+        // Holds distribution of reviews by rating (for bar chart)
+        public List<RatingCount> RatingDistribution { get; set; } = new();
+
+        // Holds average rating by month (for line chart)
+        public List<MonthAverage> MonthlyAverages { get; set; } = new();
 
         public async Task<IActionResult> OnGetAsync()
         {
@@ -51,44 +54,57 @@ namespace ReviewsystemWeb.Pages
                 {
                     AllReviews = reviews;
 
-                    // Build a distribution for how many reviews per rating
-                    // E.g., Count how many times rating 1, rating 2, etc.
+                    // 1) Build a distribution for how many reviews per rating
                     RatingDistribution = AllReviews
                         .GroupBy(r => r.Rating)
                         .Select(g => new RatingCount { Rating = g.Key, Count = g.Count() })
                         .OrderBy(rc => rc.Rating)
                         .ToList();
+
+                    // 2) Build monthly averages
+                    //    Group reviews by (month, year) or just month
+                    //    Calculate average rating
+                    var monthlyGroups = AllReviews
+                        .GroupBy(r => new { r.CreatedAt.Year, r.CreatedAt.Month })
+                        .Select(g => new MonthAverage
+                        {
+                            Year = g.Key.Year,
+                            Month = g.Key.Month,
+                            AverageRating = g.Average(r => r.Rating)
+                        })
+                        .OrderBy(ma => ma.Year)
+                        .ThenBy(ma => ma.Month)
+                        .ToList();
+
+                    // Convert (Year, Month) to something like "2023-08" or a friendly string
+                    foreach (var mg in monthlyGroups)
+                    {
+                        mg.Label = $"{mg.Year}-{mg.Month.ToString("D2")}";
+                    }
+
+                    MonthlyAverages = monthlyGroups;
                 }
             }
-            else
-            {
-                // Handle error if needed
-            }
+            // else handle errors as needed
 
             return Page();
         }
 
-        public class Review
-        {
-            public int ReviewId { get; set; }
-            public int Rating { get; set; }
-            public DateTime CreatedAt { get; set; }
-            public List<Question> Questions { get; set; } = new();
-        }
+        
 
-        public class Question
-        {
-            public int QuestionId { get; set; }
-            public string QuestionText { get; set; }
-            public string ResponseText { get; set; }
-            public int ReviewId { get; set; }
-        }
-
-        // Helper class for rating distribution
         public class RatingCount
         {
             public int Rating { get; set; }
             public int Count { get; set; }
+        }
+
+        public class MonthAverage
+        {
+            public int Year { get; set; }
+            public int Month { get; set; }
+            public double AverageRating { get; set; }
+
+            public string Label { get; set; } = "";
         }
     }
 }
