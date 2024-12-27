@@ -46,45 +46,58 @@
 
     @if (Model.AllReviews is { Count: > 0 })
     {
-        <table class="table table-striped table-hover table-dark">
-            <thead class="table-light">
-                <tr>
-                    <th>Review ID</th>
-                    <th>Rating</th>
-                    <th>Created At</th>
-                    <th>Questions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var review in Model.AllReviews)
-                {
+        <form method="post" asp-page-handler="DeleteSelected">
+            <button type="submit" class="btn btn-danger btn-sm mt-3">
+                Delete Selected
+            </button>
+            <table class="table table-striped table-hover table-dark">
+                <thead class="table-light">
                     <tr>
-                        <td>@review.ReviewId</td>
-                        <td>@review.Rating</td>
-                        <td>@review.CreatedAt.ToString("g")</td>
-                        <td>
-                            @if (review.Questions != null && review.Questions.Count > 0)
-                            {
-                                <ul class="mb-0">
-                                    @foreach (var q in review.Questions)
-                                    {
-                                        <li>
-                                            <strong>Q#@q.QuestionId:</strong> @q.QuestionText
-                                            <br />
-                                            <em>Response:</em> @q.ResponseText
-                                        </li>
-                                    }
-                                </ul>
-                            }
-                            else
-                            {
-                                @("No questions.")
-                            }
-                        </td>
+                        <th>
+                            <input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)" />
+                        </th>
+                        <th>Review ID</th>
+                        <th>Rating</th>
+                        <th>Created At</th>
+                        <th>Questions</th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var review in Model.AllReviews)
+                    {
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="selectedReviews" value="@review.ReviewId" />
+                            </td>
+                            <td>@review.ReviewId</td>
+                            <td>@review.Rating</td>
+                            <td>@review.CreatedAt.ToString("g")</td>
+                            <td>
+                                @if (review.Questions != null && review.Questions.Count > 0)
+                                {
+                                    <ul class="mb-0">
+                                        @foreach (var q in review.Questions)
+                                        {
+                                            <li>
+                                               @q.QuestionText
+                                                <br />
+                                                <em>Answer:</em> @q.ResponseText
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+                                else
+                                {
+                                    @("No asnwer.")
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+        
+        </form>
     }
     else
     {
@@ -97,16 +110,24 @@
 
 <!-- Chart Scripts -->
 <script>
-    // Chart 1: Bar
+     // Chart 1: Bar with Emojis (Larger)
     var ratingDistribution = @Json.Serialize(Model.RatingDistribution);
-    var distLabels = ratingDistribution.map(x => x.rating);
     var distCounts = ratingDistribution.map(x => x.count);
+
+    // Image paths for the X-axis labels
+    var distLabels = [
+        '/images/emoji1.png', // Path to angry face
+        '/images/emoji2.png', // Path to sad face
+        '/images/emoji3.png', // Path to neutral face
+        '/images/emoji4.png', // Path to happy face
+        '/images/emoji5.png'  // Path to excited face
+    ];
 
     var ctx1 = document.getElementById('distributionChart').getContext('2d');
     var distributionChart = new Chart(ctx1, {
         type: 'bar',
         data: {
-            labels: distLabels,
+            labels: ['1', '2', '3', '4', '5'], // Placeholder numeric labels
             datasets: [{
                 label: 'Number of Reviews by Rating',
                 data: distCounts,
@@ -117,46 +138,150 @@
         },
         options: {
             responsive: true,
+            layout: {
+                padding: {
+                    bottom: 70 // Add sufficient padding below the chart for emojis
+                }
+            },
             scales: {
+                x: {
+                    ticks: {
+                        display: false // Hide default numeric labels
+                    }
+                },
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Count'
+                    }
                 }
             }
-        }
+        },
+        plugins: [{
+            id: 'customXLabels',
+            afterDraw: function(chart) {
+                const ctx = chart.ctx;
+                const xAxis = chart.scales.x;
+
+                xAxis.ticks.forEach((tick, index) => {
+                    const x = xAxis.getPixelForTick(index);
+                    const y = chart.chartArea.bottom + 20; // Place emojis below the chart
+                    const img = new Image();
+                    img.src = distLabels[index]; // Use the image path
+                    img.onload = function() {
+                        ctx.drawImage(img, x - 15, y, 30, 30); // Draw emojis (size: 30x30)
+                    };
+                });
+            }
+        }]
     });
 
     // Chart 2: Line
-    var monthlyData = @Json.Serialize(Model.MonthlyAverages);
-    var monthLabels = monthlyData.map(m => m.label);
-    var avgRatings = monthlyData.map(m => m.averageRating);
+var monthlyData = @Json.Serialize(Model.MonthlyAverages);
+var monthLabels = monthlyData.map(m => m.label);
+var avgRatings = monthlyData.map(m => m.averageRating);
 
-    var ctx2 = document.getElementById('monthlyChart').getContext('2d');
-    var monthlyChart = new Chart(ctx2, {
-        type: 'line',
-        data: {
-            labels: monthLabels,
-            datasets: [{
-                label: 'Monthly Average Rating',
-                data: avgRatings,
-                fill: false,
-                borderColor: 'rgba(255, 99, 132, 1)',
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                borderWidth: 2,
-                tension: 0.1,
-                pointRadius: 5,
-                pointHoverRadius: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    suggestedMin: 1,
-                    suggestedMax: 5
+var ctx2 = document.getElementById('monthlyChart').getContext('2d');
+
+// Create a gradient background for the line chart
+var gradient = ctx2.createLinearGradient(0, 0, 0, 400);
+gradient.addColorStop(0, 'rgba(255, 99, 132, 0.4)'); // Lighter pink at the top
+gradient.addColorStop(1, 'rgba(255, 99, 132, 0)');   // Transparent at the bottom
+
+var emojiLabels = {
+    1: "😡", // Angry
+    2: "😞", // Sad
+    3: "😐", // Neutral
+    4: "😊", // Happy
+    5: "🤩"  // Excited
+};
+
+var monthlyChart = new Chart(ctx2, {
+    type: 'line',
+    data: {
+        labels: monthLabels, // X-axis labels (e.g., "2023-01", "2023-02")
+        datasets: [{
+            label: 'Monthly Average Rating',
+            data: avgRatings, // Data points for the line chart
+            fill: true, // Enable fill under the line
+            borderColor: 'rgba(255, 99, 132, 1)', // Line color
+            backgroundColor: gradient, // Gradient fill under the line
+            borderWidth: 3, // Thickness of the line
+            tension: 0.3, // Smoothness of the line
+            pointRadius: 6, // Radius of data points
+            pointHoverRadius: 10, // Radius of data points on hover
+            pointBackgroundColor: 'rgba(255, 99, 132, 1)', // Point color
+            pointBorderColor: '#fff', // Border color for points
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return `Rating: ${context.raw.toFixed(2)}`; // Show rating with 2 decimals
+                    }
+                }
+            },
+            legend: {
+                display: true,
+                position: 'top', // Position the legend at the top
+                labels: {
+                    font: {
+                        size: 14 // Font size for legend labels
+                    }
                 }
             }
+        },
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: 'Month', // X-axis title
+                    font: {
+                        size: 16
+                    }
+                },
+                ticks: {
+                    font: {
+                        size: 12 // Font size for X-axis labels
+                    }
+                }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: 'Average Rating (Emoji)', // Y-axis title
+                    font: {
+                        size: 16
+                    }
+                },
+                ticks: {
+                    callback: function(value) {
+                        return emojiLabels[value] || ''; // Use emoji labels for Y-axis
+                    },
+                    stepSize: 1, // Ensure only whole numbers (ratings) are shown
+                    font: {
+                        size: 20 // Font size for emojis
+                    }
+                },
+                min: 1,
+                max: 5 // Ensures the Y-axis fits the range of ratings
+            }
         }
-    });
+    }
+});
+
+
+    // Functionality for "Select All" checkbox
+    function toggleSelectAll(source) {
+        const checkboxes = document.querySelectorAll('input[name="selectedReviews"]');
+        for (const checkbox of checkboxes) {
+            checkbox.checked = source.checked;
+        }
+    }
 </script>
 
 <!-- Custom Styles -->
@@ -170,11 +295,6 @@
         margin: 0;
         padding: 0;
     }
-
-    body {
-        background-color: #f8f9fa;
-    }
-
 
     /* Section for charts (light background) */
     .section-charts {
@@ -206,13 +326,13 @@
         box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
     }
 
-        .logout-btn:hover {
-            background-color: rgba(255, 0, 0, 0.8);
-            transform: scale(1.05);
-        }
+    .logout-btn:hover {
+        background-color: rgba(255, 0, 0, 0.8);
+        transform: scale(1.05);
+    }
 
-        .logout-btn:focus {
-            outline: none;
-            box-shadow: 0px 0px 10px rgba(255, 0, 0, 0.6);
-        }
+    .logout-btn:focus {
+        outline: none;
+        box-shadow: 0px 0px 10px rgba(255, 0, 0, 0.6);
+    }
 </style>

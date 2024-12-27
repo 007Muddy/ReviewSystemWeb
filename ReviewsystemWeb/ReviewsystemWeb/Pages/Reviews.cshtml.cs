@@ -89,8 +89,35 @@ namespace ReviewsystemWeb.Pages
 
             return Page();
         }
+        public async Task<IActionResult> OnPostDeleteSelectedAsync(List<int> selectedReviews)
+        {
+            if (selectedReviews == null || !selectedReviews.Any())
+            {
+                // No reviews selected
+                return RedirectToPage();
+            }
 
-        
+            var token = HttpContext.Session.GetString("JwtToken");
+            if (string.IsNullOrEmpty(token))
+            {
+                return RedirectToPage("/Login");
+            }
+
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            foreach (var reviewId in selectedReviews)
+            {
+                var apiUrl = $"https://localhost:7006/api/Reviews/{reviewId}";
+                await client.DeleteAsync(apiUrl);
+            }
+
+            // Refresh the list of reviews
+            return await OnGetAsync();
+        }
+
+
+
 
         public class RatingCount
         {
