@@ -64,7 +64,7 @@ namespace ReviewsystemWeb.Pages
                         }
                         else
                         {
-                            return RedirectToPage("/InspectionsListPage");
+                            return RedirectToPage("/Reviews");
                         }
                     }
                     else

@@ -1,0 +1,96 @@
+﻿@page
+@model ReviewsystemWeb.Pages.ReviewsModel
+@{
+    Layout = "_Layout"; // if you have a shared layout
+}
+
+<h2>Overall Reviews Overview</h2>
+
+<!-- Chart container -->
+<canvas id="reviewsChart" width="600" height="250"></canvas>
+
+<!-- Load Chart.js from CDN (or your local copy) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Grab the distribution data passed from the PageModel
+    // We need to turn it into a JavaScript array.
+    var ratingDistribution = @Json.Serialize(Model.RatingDistribution);
+
+    // ratingDistribution is something like:
+    // [ { "rating": 1, "count": 2}, { "rating": 2, "count": 5}, ... ]
+
+    // Prepare the data for Chart.js
+    // 1) Get labels (e.g., [1, 2, 3, 4, 5])
+    var labels = ratingDistribution.map(rd => rd.rating);
+
+    // 2) Get the count data for each rating
+    var counts = ratingDistribution.map(rd => rd.count);
+
+    // Now create the chart
+    var ctx = document.getElementById('reviewsChart').getContext('2d');
+    var myChart = new Chart(ctx, {
+        type: 'bar', // bar chart
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Number of Reviews by Rating',
+                data: counts,
+                backgroundColor: 'rgba(54, 162, 235, 0.6)', // Customize color
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+
+<hr />
+
+<h2>All Reviews</h2>
+
+@if (Model.AllReviews is { Count: > 0 })
+{
+    @* Loop through each Review *@
+    @foreach (var review in Model.AllReviews)
+    {
+        <div class="card mb-3" style="padding:10px;">
+            <div>
+                <strong>Review ID:</strong> @review.ReviewId <br />
+                <strong>Rating:</strong> @review.Rating <br />
+                <strong>Created:</strong> @review.CreatedAt.ToString("g")
+            </div>
+
+            <!-- Show the questions for each review -->
+            <div style="margin-top:10px;">
+                <h5>Questions for this review</h5>
+                @if (review.Questions != null && review.Questions.Count > 0)
+                {
+                    <ul>
+                        @foreach (var q in review.Questions)
+                        {
+                            <li>
+                                <strong>Q#@q.QuestionId:</strong> @q.QuestionText <br />
+                                <em>Response:</em> @q.ResponseText
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p>No questions for this review.</p>
+                }
+            </div>
+        </div>
+    }
+}
+else
+{
+    <p>No reviews found or you may not be authorized.</p>
+}
