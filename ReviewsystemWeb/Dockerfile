@@ -10,19 +10,19 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
 # Copy the project file and restore dependencies
-COPY ["DokumentationssystemWeb/DokumentationssystemWeb.csproj", "DokumentationssystemWeb/"]
-RUN dotnet restore "DokumentationssystemWeb/DokumentationssystemWeb.csproj"
+COPY ["ReviewsystemWeb/ReviewsystemWeb.csproj", "ReviewsystemWeb/"]
+RUN dotnet restore "ReviewsystemWeb/ReviewsystemWeb.csproj"
 
 # Copy the entire project and build it
 COPY . .
-WORKDIR "/src/DokumentationssystemWeb"
-RUN dotnet build "DokumentationssystemWeb.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/ReviewsystemWeb"
+RUN dotnet build "ReviewsystemWeb.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # Publish the app to the /app/publish directory
-RUN dotnet publish "DokumentationssystemWeb.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "ReviewsystemWeb.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # Set up the final runtime image
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "DokumentationssystemWeb.dll"]
+ENTRYPOINT ["dotnet", "ReviewsystemWeb.dll"]
