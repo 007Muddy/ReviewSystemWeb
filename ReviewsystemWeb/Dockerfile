@@ -1,30 +1,28 @@
-# Base image for runtime
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-nanoserver-1809 AS base
+# Use the official ASP.NET Core runtime as the base image for running the app in production
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 
-# Stage to build the project
-FROM mcr.microsoft.com/dotnet/sdk:8.0-nanoserver-1809 AS build
+# Use the official .NET SDK image for building the app
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
-# Adjust path to match repository structure
+# Copy the project file and restore dependencies
 COPY ["ReviewsystemWeb/ReviewsystemWeb.csproj", "ReviewsystemWeb/"]
-WORKDIR "/src/ReviewsystemWeb"
-RUN dotnet restore "ReviewsystemWeb.csproj"
+RUN dotnet restore "ReviewsystemWeb/ReviewsystemWeb.csproj"
 
-# Copy all files in ReviewsystemWeb directory
-COPY ReviewsystemWeb/. .
+# Copy the entire project and build it
+COPY . .
+WORKDIR "/src/ReviewsystemWeb"
 RUN dotnet build "ReviewsystemWeb.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# Stage to publish the project
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
+# Publish the app to the /app/publish directory
 RUN dotnet publish "ReviewsystemWeb.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-# Final runtime image
+# Set up the final runtime image
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "ReviewsystemWeb.dll"]
