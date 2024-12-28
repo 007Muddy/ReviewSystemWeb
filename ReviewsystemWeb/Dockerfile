@@ -10,12 +10,11 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
 # Copy the project file and restore dependencies
-COPY ["ReviewsystemWeb/ReviewsystemWeb.csproj", "ReviewsystemWeb/"]
-RUN dotnet restore "ReviewsystemWeb/ReviewsystemWeb.csproj"
+COPY ["ReviewsystemWeb.csproj", "./"]
+RUN dotnet restore "ReviewsystemWeb.csproj"
 
 # Copy the entire project and build it
 COPY . .
-WORKDIR "/src/ReviewsystemWeb"
 RUN dotnet build "ReviewsystemWeb.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # Publish the app to the /app/publish directory
