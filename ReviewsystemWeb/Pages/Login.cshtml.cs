@@ -29,7 +29,7 @@ namespace ReviewsystemWeb.Pages
         {
             if (string.IsNullOrEmpty(Username) || string.IsNullOrEmpty(Password))
             {
-                ErrorMessage = "Please fill in both fields";
+                ErrorMessage = "Please fill in both fields.";
                 return Page();
             }
 
@@ -55,17 +55,16 @@ namespace ReviewsystemWeb.Pages
 
                     if (result != null && !string.IsNullOrEmpty(result.Token))
                     {
+                        // Save the token in session storage
                         HttpContext.Session.SetString("JwtToken", result.Token);
 
                         // Determine the role of the user
-                        if (result.Role == "Admin")
+                        return result.Role switch
                         {
-                            return RedirectToPage("/AdminViewPage");
-                        }
-                        else
-                        {
-                            return RedirectToPage("/Reviews");
-                        }
+                            "Admin" => RedirectToPage("/AdminViewPage"),
+                            "User" => RedirectToPage("/Reviews"),
+                            _ => HandleUnknownRole()
+                        };
                     }
                     else
                     {
@@ -75,15 +74,33 @@ namespace ReviewsystemWeb.Pages
                 }
                 else
                 {
-                    ErrorMessage = "Login failed: Username or password is incorrect.";
+                    // Extract error details from the response
+                    var errorDetails = await response.Content.ReadAsStringAsync();
+                    ErrorMessage = $"Login failed: {response.StatusCode} - {errorDetails}";
                     return Page();
                 }
             }
-            catch (Exception ex)
+            catch (HttpRequestException ex)
             {
-                ErrorMessage = $"An error occurred: {ex.Message}";
+                ErrorMessage = "Network error: Unable to connect to the server. Please check your internet connection.";
                 return Page();
             }
+            catch (JsonException ex)
+            {
+                ErrorMessage = "An error occurred while processing the server response.";
+                return Page();
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"An unexpected error occurred: {ex.Message}";
+                return Page();
+            }
+        }
+
+        private IActionResult HandleUnknownRole()
+        {
+            ErrorMessage = "Unknown role received from the server.";
+            return Page();
         }
 
         public class LoginResponse

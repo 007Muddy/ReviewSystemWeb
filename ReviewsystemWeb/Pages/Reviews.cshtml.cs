@@ -9,12 +9,17 @@ using System.Linq;
 using System;
 using static ReviewsystemWeb.Models.ReviewModel;
 using OfficeOpenXml;
+using static ReviewsystemWeb.Pages.LoginModel;
+using System.Text;
+using System.Text.Json.Serialization;
 
 namespace ReviewsystemWeb.Pages
 {
     public class ReviewsModel : PageModel
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        public string GeneratedAccessKey { get; set; }
+        public string ErrorMessage { get; set; }
 
         public ReviewsModel(IHttpClientFactory httpClientFactory)
         {
@@ -95,6 +100,47 @@ namespace ReviewsystemWeb.Pages
 
             return Page();
         }
+        [BindProperty]
+        public string AccessKey { get; set; }
+
+        public async Task<IActionResult> OnPostGenerateAccessKeyAsync()
+        {
+            var token = HttpContext.Session.GetString("JwtToken");
+            if (string.IsNullOrEmpty(token))
+            {
+                return RedirectToPage("/Login");
+            }
+
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            try
+            {
+                var apiUrl = "https://localhost:7006/api/auth/generate-access-key";
+                var response = await client.PostAsync(apiUrl, null);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var resultJson = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<AccessKeyResponse>(resultJson);
+
+                    if (result != null)
+                    {
+                        GeneratedAccessKey = result.AccessKey; // Save the key to the property
+                        return Page();
+                    }
+                }
+
+                ErrorMessage = "Failed to generate access key.";
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"An error occurred: {ex.Message}";
+            }
+
+            return Page();
+        }
+
 
         public async Task<IActionResult> OnPostDeleteSelectedAsync(List<int> selectedReviews)
         {
@@ -216,6 +262,11 @@ namespace ReviewsystemWeb.Pages
             public double AverageRating { get; set; }
 
             public string Label { get; set; } = "";
+        }
+        public class AccessKeyResponse
+        {
+            [JsonPropertyName("accessKey")]
+            public string AccessKey { get; set; }
         }
     }
 }
