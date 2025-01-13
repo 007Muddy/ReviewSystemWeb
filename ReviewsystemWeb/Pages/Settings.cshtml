@@ -1,0 +1,32 @@
+﻿@page
+@model ReviewsystemWeb.Pages.SettingsModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Theme Settings";
+}
+
+<h1>Theme Settings</h1>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+@if (Model.ErrorMessage != null)
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+<form method="post" asp-page-handler="UpdateTheme">
+    <div class="mb-3">
+        <label for="theme" class="form-label">Select Theme:</label>
+        <select asp-for="Theme" class="form-control">
+            <option value="Normal" selected>Normal</option>
+            <option value="Halloween">Halloween</option>
+            <option value="Christmas">Christmas</option>
+
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-2">Update Theme</button>
+</form>
